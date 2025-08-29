@@ -1,6 +1,15 @@
 ## Dataset & Credits
 
-**Dataset:** [EuroSAT](https://github.com/phelber/eurosat) — A novel dataset and deep learning benchmark for land use and land cover classification.  
+**Dataset:** [EuroSAT](https://github.com/phelber/eurosat) — A novel dataset and deep learning benchmark for land use and land cover classification. 
+
+Download it from [Zenodo](https://zenodo.org/record/2543456) and extract into `data/EuroSAT/`.  
+The folder structure should be:
+
+data/EuroSAT/  
+├─ AnnualCrop/  
+├─ Forest/  
+├─ SeaLake/  
+├─ ... (other classes)
 
 **Citations:**  
 1. Helber, P., Bischke, B., Dengel, A., & Borth, D. (2019). *EuroSAT: A Novel Dataset and Deep Learning Benchmark for Land Use and Land Cover Classification.* IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing.  
