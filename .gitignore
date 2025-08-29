@@ -1,5 +1,5 @@
 # custom additions
-data/EuroSAT
+data/EuroSAT_RGB
 *.h5
 *.pt
 
