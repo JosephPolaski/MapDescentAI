@@ -1,5 +1,7 @@
 from pathlib import Path
 
-source_directory = Path(__file__).parent
+root = Path(__file__).parent.parent
 
-PREPROCESSING_DIR = source_directory / "preprocessing"
+SRC_DIR = root / "src"
+DATA_DIR = root / "data"
+PREPROCESSING_DIR = SRC_DIR / "preprocessing"
