@@ -1,4 +1,5 @@
 import logging
+import inspect
 import utilities.paths as paths
 import utilities.constants as constants
 import utilities.file_helpers as fh
@@ -35,7 +36,7 @@ class MPLog:
             self.logger.removeHandler(handler)
         
         formatter = logging.Formatter(
-            fmt="[%(asctime)s] | %(module)s:%(lineno)d : %(message)s",
+            fmt="[%(asctime)s] | %(caller_name)s : %(message)s",
             datefmt="%H:%M:%S"
         )
 
@@ -48,16 +49,20 @@ class MPLog:
         self.logger.addHandler(file_handler)
 
     def info(self, message:str):
-        self.logger.info(message)
+        caller_name = inspect.stack()[1].function
+        self.logger.info(message, extra={'caller_name': caller_name})
 
     def warning(self, message:str):
-        self.logger.warning(message)
+        caller_name = inspect.stack()[1].function
+        self.logger.warning(message, extra={'caller_name': caller_name})
 
     def error(self, message:str):
-        self.logger.error(message)
+        caller_name = inspect.stack()[1].function
+        self.logger.error(message, extra={'caller_name': caller_name})
 
     def method_entry(self):
-        self.logger.error("Method Entered")
+        caller_name = inspect.stack()[1].function
+        self.logger.error("Method Entered", extra={'caller_name': caller_name})
 
     
 
