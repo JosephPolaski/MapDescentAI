@@ -2,6 +2,8 @@ import logging
 
 LOG_LEVEL = logging.INFO
 RGB_MAX = 255
+RANDOM_SEED = 88
+JPEG_EXT = ".jpg"
 
 LABEL_TO_INDEX_MAP = {
     "AnnualCrop" : 0,
