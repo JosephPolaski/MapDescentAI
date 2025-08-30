@@ -1,3 +1,9 @@
+
+## MapDescentAI
+
+**What is it ?**  
+MapDescentAI is a machine learning project that classifies land cover types (forest, urban, water, agriculture) from satellite image patches using a custom-built model. The project allows me to learn and demonstrate machine learning fundamentals, including linear algebra, calculus, and gradient descent, while showcasing my software engineering and data pipeline skills.
+
 ## Dataset & Credits
 
 **Dataset:** [EuroSAT](https://github.com/phelber/eurosat) — A novel dataset and deep learning benchmark for land use and land cover classification. 
