@@ -1,7 +1,10 @@
 # custom additions
+data/stored/
 data/EuroSAT_RGB/
 *.h5
 *.pt
+*.npz
+test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
