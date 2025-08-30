@@ -1,24 +1,28 @@
-import file_helpers
 import logging
+import utilities.paths as paths
+import utilities.constants as constants
+import utilities.file_helpers as fh
 
 from logging import Logger
+from pathlib import Path
 from datetime import datetime
-from utilities.paths import Paths
-from utilities.constants import Constants
-from decorators.lazy_singleton import lazy_singleton
+from utilities.decorators.lazy_singleton import lazy_singleton
 
 @lazy_singleton
 class MPLog:
 
     def __init__(self):
-        self.timestamp = f"{datetime.strftime("%Y%m%d%H%M%S")}"
+        self.timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         self.filename = f"mapdescentlog_" + self.timestamp + ".log"
+        self.filepath = paths.LOGS_DIR / self.filename
         self.logger : Logger = None
                         
         self.__initialize_logger()
+
+        self.logger.info("Logger initialized successfully")
         
     def __initialize_logger(self):
-        isDirSuccess = file_helpers.try_create_directory(Paths.LOGS_DIR)
+        isDirSuccess = fh.try_create_directory(paths.LOGS_DIR)
 
         if not isDirSuccess:
             print("MapDescentAI logger failed to initialize")
@@ -35,10 +39,12 @@ class MPLog:
             datefmt="%H:%M:%S"
         )
 
-        file_handler = logging.FileHandler(self.filename)
-        file_handler.setLevel(Constants.LOG_LEVEL)    
+        file_handler = logging.FileHandler(self.filepath)
+        file_handler.setLevel(constants.LOG_LEVEL) 
+        self.logger.propagate = False   
         file_handler.setFormatter(formatter)
 
+        self.logger.setLevel(constants.LOG_LEVEL)
         self.logger.addHandler(file_handler)
 
     def info(self, message:str):
@@ -49,6 +55,9 @@ class MPLog:
 
     def error(self, message:str):
         self.logger.error(message)
+
+    def method_entry(self):
+        self.logger.error("Method Entered")
 
     
 

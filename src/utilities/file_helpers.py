@@ -4,7 +4,7 @@ from pathlib import Path
 @staticmethod
 def try_create_directory(create_path : Path) -> bool:
     try:
-        if not os.path.isdir():
+        if not os.path.isdir(create_path):
             os.mkdir(create_path)
 
         return True    
@@ -15,7 +15,7 @@ def try_create_directory(create_path : Path) -> bool:
 @staticmethod
 def try_create_file(create_path : Path) -> bool:
     try:
-        if not os.path.isfile():
+        if not os.path.isfile(create_path):
             file_descriptor : int = os.open(create_path, os.O_CREAT)
             os.close(file_descriptor)
 
