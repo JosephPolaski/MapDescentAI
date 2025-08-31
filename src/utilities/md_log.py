@@ -5,22 +5,19 @@ import utilities.constants as constants
 import utilities.file_helpers as fh
 
 from logging import Logger
-from pathlib import Path
 from datetime import datetime
 from utilities.decorators.lazy_singleton import lazy_singleton
 
 @lazy_singleton
-class MPLog:
+class MDLog:
 
     def __init__(self):
         self.timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        self.filename = f"mapdescentlog_" + self.timestamp + ".log"
+        self.filename = "mapdescentlog_" + self.timestamp + ".log"
         self.filepath = paths.LOGS_DIR / self.filename
         self.logger : Logger = None
                         
-        self.__initialize_logger()
-
-        self.logger.info("Logger initialized successfully")
+        self.__initialize_logger()      
         
     def __initialize_logger(self):
         isDirSuccess = fh.try_create_directory(paths.LOGS_DIR)
