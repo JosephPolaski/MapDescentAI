@@ -3,7 +3,7 @@ import sys
 import utilities.paths as paths
 import utilities.file_helpers as file_helpers
 
-from data_transfer_objects import SplitData
+from data_management.data_transfer_objects.split_data import SplitData
 from datetime import datetime
 from numpy.typing import NDArray
 from pathlib import Path
@@ -78,8 +78,24 @@ class DataManager:
         except Exception as ex:
             self.logger.error(f"Failed to store data locally: \n\n {ex} \n\n")
 
-    def load_stored_data(self):
-        pass
+    def load_stored_data(self) -> SplitData | None:
+        try:
+            most_recent_dataset : Path = file_helpers.get_most_recent_dataset_filename()
+
+            if most_recent_dataset is None:
+                return None
+
+            stored_data = np.load(most_recent_dataset.name)
+
+            return SplitData(
+                labels_test = stored_data["labels_test"],
+                labels_train = stored_data["labels_train"],
+                features_test = stored_data["features_test"],
+                features_train = stored_data["features_train"]
+            )
+
+        except Exception as ex:
+            self.logger.error(f"Failed to load stored data: \n\n {ex} \n\n")
 
 if __name__=="__main__" :
     print("This module is not meant to be run as a standalone script...exiting..")

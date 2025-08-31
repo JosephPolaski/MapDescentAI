@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from utilities import paths
 
 @staticmethod
 def try_create_directory(create_path : Path) -> bool:
@@ -22,3 +23,11 @@ def try_create_file(create_path : Path) -> bool:
         return True    
     except:
         return False
+    
+@staticmethod
+def get_most_recent_dataset_filename() -> Path | None:
+    try:
+        dataset_files = [f for f in paths.STORED_DATA_DIR.iterdir() if f.is_file]
+        return max(dataset_files, key=lambda f: f.stat().st_mtime)
+    except:
+        return None
