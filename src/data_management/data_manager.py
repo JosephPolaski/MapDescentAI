@@ -5,17 +5,16 @@ import utilities.file_helpers as file_helpers
 
 from data_management.data_transfer_objects.split_data import SplitData
 from datetime import datetime
-from numpy.typing import NDArray
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from typing import Dict, List
 from utilities import constants
-from utilities import MPLog
+from utilities import MDLog
 
 class DataManager:
 
     def __init__(self):           
-        self.logger = MPLog()
+        self.logger = MDLog()
         self.split_data : SplitData = None
         self.image_count : int = 0  
 
@@ -85,7 +84,7 @@ class DataManager:
             if most_recent_dataset is None:
                 return None
 
-            stored_data = np.load(most_recent_dataset.name)
+            stored_data = np.load(most_recent_dataset)
 
             return SplitData(
                 labels_test = stored_data["labels_test"],

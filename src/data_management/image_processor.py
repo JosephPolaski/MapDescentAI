@@ -7,13 +7,13 @@ from numpy.typing import NDArray
 from pathlib import Path
 from typing import Dict
 from utilities import constants
-from utilities import MPLog
+from utilities import MDLog
 
 class ImageProcessor:      
 
     def __init__(self):
         self.data_manager = DataManager()           
-        self.logger = MPLog()
+        self.logger = MDLog()
 
         self.feature_count = 0
         self.feature_matrix : NDArray = None
