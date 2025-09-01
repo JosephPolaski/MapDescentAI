@@ -1,4 +1,6 @@
 # custom additions
+*.log
+logs/
 data/stored/
 data/EuroSAT_RGB/
 *.h5
