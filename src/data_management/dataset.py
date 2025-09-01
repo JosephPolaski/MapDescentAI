@@ -13,8 +13,8 @@ class MapDescentDataset:
         self.logger = MDLog()
         self.data_manager = DataManager()
         self.stored_data_filename = ""
-        self.number_of_classes = 0
-        self.number_of_features = 0
+        self.number_of_classes = self.data_manager.training_image_count
+        self.number_of_features = self.data_manager.label_count
 
         self.labels_train = None
         self.labels_test = None

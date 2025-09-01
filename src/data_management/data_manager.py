@@ -42,7 +42,7 @@ class DataManager:
                 if(label_exists):
                     images_with_labels[label] += image_paths
                 else:
-                    images_with_labels[label] = image_paths                    
+                    images_with_labels[label] = image_paths                                    
 
             self.label_count = len(images_with_labels)
             return images_with_labels
@@ -64,7 +64,8 @@ class DataManager:
         self.split_data.labels_train = train_labels,
         self.split_data.labels_test = test_labels,
         self.split_data.features_train = train_features,
-        self.split_data.features_test = test_features       
+        self.split_data.features_test = test_features  
+        self.training_image_count = len(test_features)     
 
     def store_data_locally(self, data_type = StoredDataType.DATASET , parameters : ModelParameters = None):
         try:
@@ -103,13 +104,15 @@ class DataManager:
             stored_data = np.load(most_recent_data)
 
             if(data_type == StoredDataType.DATASET):
+                self.training_image_count = len(stored_data["features_train"])
+                self.label_count = len(np.unique(stored_data["labels_train"]))
                 return SplitData(
                     labels_test = stored_data["labels_test"],
                     labels_train = stored_data["labels_train"],
                     features_test = stored_data["features_test"],
                     features_train = stored_data["features_train"]
-                )
-            
+                )           
+                
             if(data_type == StoredDataType.PARAMETERS):
                 return ModelParameters(
                     weights = stored_data["weights"],
