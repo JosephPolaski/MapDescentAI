@@ -18,19 +18,59 @@ class MapDescentModel:
         self.data_manager : DataManager = DataManager()
 
         # Data Members
-        self.parameters : ModelParameters = ModelParameters()
-        self.learning_rate = 0
-        self.epochs = 0
+        self.parameters : ModelParameters = ModelParameters()        
 
         self.__try_load_parameters()
         
+    def __save_parameters(self):
+        self.data_manager.store_data_locally(StoredDataType.PARAMETERS, self.parameters)
+
     def __try_load_parameters(self):
         stored_parameters = self.data_manager.load_stored_data(StoredDataType.PARAMETERS)  
 
         if stored_parameters is None:
-            self.logger.info("No stored parameters have been established yet, starting with default")  
+            self.logger.info("No stored parameters have been established yet, starting with defaults")
+            self.parameters.weights = np.random.randn(self.dataset.number_of_features, self.dataset.number_of_classes) * 0.01
+            self.parameters.bias = np.zeros((self.dataset.number_of_classes, 1))  
             return
 
         self.parameters = stored_parameters
+
+    def forward_pass(self):
+        
+        self.logger.info("Compute land use class probabilities for each class in each image using softmax")
+
+        self.logger.info("Creating linear combination of features and weights (raw scores per class per image)")
+        raw_class_scores = np.dot(self.dataset.features_train, self.parameters.weights) 
+        raw_class_scores += self.parameters.bias
+
+        self.logger.info("Get maximum per row to prevent large exponentials in softmax")
+        max_class_score_per_row = np.max(raw_class_scores, axis=1, keepdims=True)
+        
+        self.logger.info("Convert raw scores to normalized class probabilities that sum to 1 per image")
+        score_exponentials = np.exp(raw_class_scores - max_class_score_per_row)
+        probabilities = score_exponentials / np.sum(score_exponentials, axis=1, keepdims=True)
+        return probabilities
+    
+    def calclate_loss(self, probs: np.ndarray, y: np.ndarray) -> float:
+        #TODO figure out how to pull number of images and classes properly
+        return 
+
+    def train_model(self):
+        pass
+
+    def predict_class_probability(self):
+        pass
+
+    def probabilities_to_class_labels(self):
+        pass
+
+    def compute_loss(self):
+        pass
+
+    def evaluate_performance(self):
+        pass
+
+   
 
 

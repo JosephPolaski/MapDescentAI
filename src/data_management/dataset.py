@@ -1,3 +1,4 @@
+import numpy as np
 import utilities.file_helpers as file_helpers
 
 from data_management.data_manager import DataManager
@@ -12,6 +13,8 @@ class MapDescentDataset:
         self.logger = MDLog()
         self.data_manager = DataManager()
         self.stored_data_filename = ""
+        self.number_of_classes = 0
+        self.number_of_features = 0
 
         self.labels_train = None
         self.labels_test = None

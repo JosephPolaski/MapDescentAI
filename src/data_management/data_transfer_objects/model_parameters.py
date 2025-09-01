@@ -8,3 +8,5 @@ class ModelParameters:
     bias : NDArray = None        
     loss_history : List[float] = field(default_factory=list)
     number_of_classes : int = 0
+    learning_rate : float = 0.0
+    epochs : int = 0

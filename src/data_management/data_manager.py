@@ -18,7 +18,10 @@ class DataManager:
     def __init__(self):           
         self.logger = MDLog()
         self.split_data : SplitData = None
-        self.image_count : int = 0  
+        self.image_count : int = 0
+        self.training_image_count : int = 0
+        self.label_count :int = 0
+         
 
     def get_image_paths_with_labels(self) -> Dict[str, List[Path]]:      
         try:
@@ -39,8 +42,9 @@ class DataManager:
                 if(label_exists):
                     images_with_labels[label] += image_paths
                 else:
-                    images_with_labels[label] = image_paths
+                    images_with_labels[label] = image_paths                    
 
+            self.label_count = len(images_with_labels)
             return images_with_labels
 
         except Exception as ex:
