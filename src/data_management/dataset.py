@@ -1,4 +1,3 @@
-import numpy as np
 import utilities.file_helpers as file_helpers
 
 from data_management.data_manager import DataManager
