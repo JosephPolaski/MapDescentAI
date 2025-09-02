@@ -38,8 +38,7 @@ class MapDescentModel:
 
         self.parameters = stored_parameters
 
-    def forward_pass(self) -> NDArray:
-        
+    def forward_pass(self) -> NDArray:        
         self.logger.info("Compute land use class probabilities for each class in each image using softmax")
 
         self.logger.info("Creating linear combination of features and weights (raw scores per class per image)")
@@ -64,20 +63,38 @@ class MapDescentModel:
         self.parameters.loss_history.append(cross_entropy_loss)
         return cross_entropy_loss
 
+    def backward_pass(self, probabilities: np.ndarray):
+        self.logger.info("Calculating loss gradients with respect to each weight and bias")
+
+        number_of_samples = self.dataset.features_train.shape[0]
+
+        gradient_of_loss_logits = probabilities.copy()
+        gradient_of_loss_logits[range(number_of_samples), self.dataset.labels_train] -= 1
+        gradient_of_loss_logits /= number_of_samples
+
+        gradient_weights = np.dot(self.dataset.features_train.T, gradient_of_loss_logits)
+        gradient_bias = np.sum(gradient_of_loss_logits, axis=0, keepdims=True)
+
+        self.logger.info("Updating weights and bias")
+        self.parameters.weights -= self.parameters.learning_rate * gradient_weights
+        self.parameters.bias -=  self.parameters.learning_rate * gradient_bias
+
     def train_model(self):
-        pass
+        self.logger.info(f"Training MapDescentAI Model with Learning Rate: {self.parameters.learning_rate} and Epochs: {self.parameters.epochs}")
 
-    def predict_class_probability(self):
-        pass
+        for epoch in range(self.parameters.epochs):
 
-    def probabilities_to_class_labels(self):
-        pass
+            probabilities = self.forward_pass()
 
-    def compute_loss(self):
-        pass
+            loss = self.calclate_cross_entropy_loss(probabilities)
+            self.backward_pass(probabilities)
 
-    def evaluate_performance(self):
-        pass
+            if epoch % 10 == 0:
+                self.logger.info(f"Epoch completed with a loss value of {loss}")
+
+            
+       
+        
 
    
 
