@@ -54,7 +54,7 @@ class ImageProcessor:
 
             self.__flatten_and_normalize_image_data(images_with_labels)                
             self.data_manager.split_dataset(self.label_vector, self.feature_matrix)
-            self.data_manager.store_dataset_locally()       
+            self.data_manager.store_data_locally()       
 
         except Exception as ex:
             self.logger.error(f"Failed to flatten image data: \n\n {ex} \n\n")
