@@ -1,13 +1,10 @@
-
 import numpy as np
-import utilities.paths as paths
 
 from data_management.data_manager import DataManager
 from data_management.dataset import MapDescentDataset
 from data_management.data_transfer_objects.model_parameters import ModelParameters
 from data_management.enums.stored_data_type import StoredDataType
 from numpy.typing import NDArray
-from utilities import constants
 from utilities import MDLog
 
 class MapDescentModel:
