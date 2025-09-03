@@ -30,7 +30,7 @@ class MapDescentModel:
         if stored_parameters is None:
             self.logger.info("No stored parameters have been established yet, starting with defaults")
             self.parameters.weights = np.random.randn(self.dataset.number_of_features, self.dataset.number_of_classes) * 0.01
-            self.parameters.bias = np.zeros((self.dataset.number_of_classes, 1))  
+            self.parameters.bias = np.zeros((1, self.dataset.number_of_classes))  
             return
 
         self.parameters = stored_parameters
@@ -50,11 +50,17 @@ class MapDescentModel:
         probabilities = score_exponentials / np.sum(score_exponentials, axis=1, keepdims=True)
         return probabilities
     
-    def calclate_cross_entropy_loss(self, probabilities: np.ndarray) -> float:
-        self.logger.info("Calculating cross entropy loss.")
+    def calclate_cross_entropy_loss(self, probabilities: np.ndarray) -> float:     
+        self.logger.info("Calculating cross entropy loss.")       
 
-        number_of_samples = self.dataset.labels_train.shape[0]
-        cross_entropy_loss = -np.sum(self.dataset.labels_train * np.log(probabilities + self.epsilon)) /   number_of_samples
+        # 1. Ensure probabilities don't hit exactly 0 or 1
+        bounded_probabilities = np.clip(probabilities, self.epsilon, 1 - self.epsilon)
+
+        # 2. Extract the probability assignd to the correct classes
+        class_probabilities = bounded_probabilities[np.arange(len(self.dataset.labels_train)), self.dataset.labels_train]
+
+        # 3. Cross-entropy = negative average log probability of correct classes
+        cross_entropy_loss = -np.mean(np.log(class_probabilities))
 
         self.logger.info("Adding calculated loss to loss history parameter")
         self.parameters.loss_history.append(cross_entropy_loss)
