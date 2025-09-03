@@ -5,7 +5,7 @@ from data_management.dataset import MapDescentDataset
 from data_management.data_transfer_objects.model_parameters import ModelParameters
 from data_management.enums.stored_data_type import StoredDataType
 from numpy.typing import NDArray
-from utilities import MDLog
+from utilities.md_log import MDLog
 
 class MapDescentModel:
 
@@ -19,11 +19,8 @@ class MapDescentModel:
         self.epsilon = 1e-15
         self.parameters : ModelParameters = ModelParameters()        
 
-        self.__try_load_parameters()
-        
-    def __save_parameters(self):
-        self.data_manager.store_data_locally(StoredDataType.PARAMETERS, self.parameters)
-
+        self.__try_load_parameters()      
+   
     def __try_load_parameters(self):
         stored_parameters = self.data_manager.load_stored_data(StoredDataType.PARAMETERS)  
 
@@ -34,25 +31,24 @@ class MapDescentModel:
             return
 
         self.parameters = stored_parameters
+        self.logger.Info("Successfully loaded saved training parameters")
 
     def forward_pass(self) -> NDArray:        
-        self.logger.info("Compute land use class probabilities for each class in each image using softmax")
+        """Compute land use class probabilities for each class in each image using softmax"""
 
-        self.logger.info("Creating linear combination of features and weights (raw scores per class per image)")
+        # Creating linear combination of features and weights (raw scores per class per image)
         raw_class_scores = np.dot(self.dataset.features_train, self.parameters.weights) 
         raw_class_scores += self.parameters.bias
 
-        self.logger.info("Get maximum per row to prevent large exponentials in softmax")
+        # Get maximum per row to prevent large exponentials in softmax 
         max_class_score_per_row = np.max(raw_class_scores, axis=1, keepdims=True)
         
-        self.logger.info("Convert raw scores to normalized class probabilities that sum to 1 per image")
+        # Convert raw scores to normalized class probabilities that sum to 1 per image
         score_exponentials = np.exp(raw_class_scores - max_class_score_per_row)
         probabilities = score_exponentials / np.sum(score_exponentials, axis=1, keepdims=True)
         return probabilities
     
-    def calclate_cross_entropy_loss(self, probabilities: np.ndarray) -> float:     
-        self.logger.info("Calculating cross entropy loss.")       
-
+    def calclate_cross_entropy_loss(self, probabilities: np.ndarray) -> float: 
         # 1. Ensure probabilities don't hit exactly 0 or 1
         bounded_probabilities = np.clip(probabilities, self.epsilon, 1 - self.epsilon)
 
@@ -61,13 +57,12 @@ class MapDescentModel:
 
         # 3. Cross-entropy = negative average log probability of correct classes
         cross_entropy_loss = -np.mean(np.log(class_probabilities))
-
-        self.logger.info("Adding calculated loss to loss history parameter")
+        
         self.parameters.loss_history.append(cross_entropy_loss)
         return cross_entropy_loss
 
     def backward_pass(self, probabilities: np.ndarray):
-        self.logger.info("Calculating loss gradients with respect to each weight and bias")
+        """ Calculating loss gradients with respect to each weight and bias """
 
         number_of_samples = self.dataset.features_train.shape[0]
 
@@ -78,9 +73,12 @@ class MapDescentModel:
         gradient_weights = np.dot(self.dataset.features_train.T, gradient_of_loss_logits)
         gradient_bias = np.sum(gradient_of_loss_logits, axis=0, keepdims=True)
 
-        self.logger.info("Updating weights and bias")
+        # Updating weights and bias
         self.parameters.weights -= self.parameters.learning_rate * gradient_weights
         self.parameters.bias -=  self.parameters.learning_rate * gradient_bias
+
+    def save_parameters(self):
+        self.data_manager.store_data_locally(StoredDataType.PARAMETERS, self.parameters)
 
     def train_model(self):
         self.logger.info(f"Training MapDescentAI Model with Learning Rate: {self.parameters.learning_rate} and Epochs: {self.parameters.epochs}")
@@ -92,8 +90,10 @@ class MapDescentModel:
             loss = self.calclate_cross_entropy_loss(probabilities)
             self.backward_pass(probabilities)
 
-            if epoch % 10 == 0:
-                self.logger.info(f"Epoch completed with a loss value of {loss}")
+            self.logger.info(f"Epoch {epoch} completed with a loss value of {loss}")
+                
+
+        
 
             
        
