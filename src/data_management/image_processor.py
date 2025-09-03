@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 from pathlib import Path
 from typing import Dict
 from utilities import constants
-from utilities import MDLog
+from utilities.md_log import MDLog
 
 class ImageProcessor:      
 
@@ -18,6 +18,7 @@ class ImageProcessor:
         self.feature_count = 0
         self.feature_matrix : NDArray = None
         self.label_vector : None
+        self.is_preallocated = False
 
     def __flatten_and_normalize_image_data(self, images_with_labels : Dict[str, Path]):
         total_count = 0
@@ -39,12 +40,12 @@ class ImageProcessor:
         self.logger.info("Normalized image BGR values")       
         self.logger.info("Image flattening complete...") 
 
-    def __preallocate_shapes(self, image_shape):
-        self.label_vector = np.zeros((self.data_manager.image_count, 1), dtype=int)
-
-        if self.feature_count == 0:
+    def __preallocate_shapes(self, image_shape):      
+        if not self.is_preallocated:
+            self.label_vector = np.zeros((self.data_manager.image_count,), dtype=int)
             self.feature_count = np.prod(image_shape)
-            self.feature_matrix = np.zeros((self.data_manager.image_count, self.feature_count))        
+            self.feature_matrix = np.zeros((self.data_manager.image_count, self.feature_count))    
+            self.is_preallocated = True  
 
     def build_flattened_image_data(self) -> None:       
         try:

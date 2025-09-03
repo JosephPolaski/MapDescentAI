@@ -11,7 +11,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from typing import Dict, List
 from utilities import constants
-from utilities import MDLog
+from utilities.md_log import MDLog
 
 class DataManager:
 
@@ -19,7 +19,7 @@ class DataManager:
         self.logger = MDLog()
         self.split_data : SplitData = None
         self.image_count : int = 0
-        self.training_image_count : int = 0
+        self.training_feature_count : int = 0
         self.label_count :int = 0
          
 
@@ -53,19 +53,22 @@ class DataManager:
     def split_dataset(self, label_vector, feature_matrix):
         self.logger.info("Randomly splitting data into training (80%) and testing (20%) sets")
 
+        label_vector_1d = label_vector.ravel()       
+
         train_labels, test_labels, train_features, test_features = train_test_split(
-            label_vector,
+            label_vector_1d, # flatten to 1D list of classes
             feature_matrix,
             test_size=0.2,
-            random_state=constants.RANDOM_SEED
+            random_state=constants.RANDOM_SEED,
+            stratify=label_vector_1d
         )
 
         self.split_data = SplitData() 
-        self.split_data.labels_train = train_labels,
-        self.split_data.labels_test = test_labels,
-        self.split_data.features_train = train_features,
+        self.split_data.labels_train = train_labels
+        self.split_data.labels_test = test_labels
+        self.split_data.features_train = train_features
         self.split_data.features_test = test_features  
-        self.training_image_count = len(test_features)     
+        self.training_feature_count = test_features.shape[1]  
 
     def store_data_locally(self, data_type = StoredDataType.DATASET , parameters : ModelParameters = None):
         try:
@@ -104,13 +107,13 @@ class DataManager:
             stored_data = np.load(most_recent_data)
 
             if(data_type == StoredDataType.DATASET):
-                self.training_image_count = len(stored_data["features_train"])
-                self.label_count = len(np.unique(stored_data["labels_train"]))
+                self.training_feature_count = stored_data["features_train"].shape[1]
+                self.label_count = np.unique(stored_data["labels_train"]).size
                 return SplitData(
                     labels_test = stored_data["labels_test"],
                     labels_train = stored_data["labels_train"],
-                    features_test = stored_data["features_test"],
-                    features_train = stored_data["features_train"]
+                    features_test = np.squeeze(stored_data["features_test"]),
+                    features_train = np.squeeze(stored_data["features_train"])
                 )           
                 
             if(data_type == StoredDataType.PARAMETERS):

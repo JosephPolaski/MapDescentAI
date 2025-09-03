@@ -11,9 +11,11 @@ class MapDescentDataset:
     def __init__(self):
         self.logger = MDLog()
         self.data_manager = DataManager()
+        self.data_manager.load_stored_data()
+
         self.stored_data_filename = ""
-        self.number_of_classes = self.data_manager.training_image_count
-        self.number_of_features = self.data_manager.label_count
+        self.number_of_classes = self.data_manager.label_count
+        self.number_of_features = self.data_manager.training_feature_count
 
         self.labels_train = None
         self.labels_test = None
@@ -33,7 +35,7 @@ class MapDescentDataset:
             return True       
             
         except Exception as ex:
-            MDLog.error(f"Check for stored data failed: \n\n {ex} \n\n")
+            self.logger.error(f"Check for stored data failed: \n\n {ex} \n\n")
             return False
         
     def __try_fetch_stored_data(self) -> bool:
@@ -72,4 +74,4 @@ class MapDescentDataset:
             self.__preprocess_and_fetch()            
 
         except Exception as ex:
-            MDLog.error(f"failed to initialize dataset: \n\n {ex} \n\n")
+            self.logger.error(f"failed to initialize dataset: \n\n {ex} \n\n")
