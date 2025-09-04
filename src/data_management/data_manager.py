@@ -107,6 +107,7 @@ class DataManager:
             stored_data = np.load(most_recent_data)
 
             if(data_type == StoredDataType.DATASET):
+                self.logger.info(f"Loaded dataset from {most_recent_data}")
                 self.training_feature_count = stored_data["features_train"].shape[1]
                 self.label_count = np.unique(stored_data["labels_train"]).size
                 return SplitData(
@@ -117,6 +118,7 @@ class DataManager:
                 )           
                 
             if(data_type == StoredDataType.PARAMETERS):
+                self.logger.info(f"Loaded parameters from {most_recent_data}")
                 return ModelParameters(
                     weights = stored_data["weights"],
                     bias = stored_data["bias"],

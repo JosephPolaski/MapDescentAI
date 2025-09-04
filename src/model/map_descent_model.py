@@ -16,6 +16,7 @@ class MapDescentModel:
         self.data_manager : DataManager = DataManager()
 
         # Data Members
+        self.training_loss_history = []
         self.epsilon = 1e-15
         self.parameters : ModelParameters = ModelParameters()        
 
@@ -31,7 +32,7 @@ class MapDescentModel:
             return
 
         self.parameters = stored_parameters
-        self.logger.Info("Successfully loaded saved training parameters")
+        self.logger.info("Successfully loaded saved training parameters")
 
     def forward_pass(self) -> NDArray:        
         """Compute land use class probabilities for each class in each image using softmax"""
@@ -58,7 +59,7 @@ class MapDescentModel:
         # 3. Cross-entropy = negative average log probability of correct classes
         cross_entropy_loss = -np.mean(np.log(class_probabilities))
         
-        self.parameters.loss_history.append(cross_entropy_loss)
+        self.training_loss_history.append(float(cross_entropy_loss))
         return cross_entropy_loss
 
     def backward_pass(self, probabilities: np.ndarray):
@@ -78,6 +79,13 @@ class MapDescentModel:
         self.parameters.bias -=  self.parameters.learning_rate * gradient_bias
 
     def save_parameters(self):
+        training_loss_array = np.array(self.training_loss_history, dtype=np.float32)
+
+        if(self.parameters.loss_history is None):
+            self.parameters.loss_history = training_loss_array
+        else:
+            self.parameters.loss_history = np.concatenate([self.parameters.loss_history, training_loss_array])
+            
         self.data_manager.store_data_locally(StoredDataType.PARAMETERS, self.parameters)
 
     def train_model(self):

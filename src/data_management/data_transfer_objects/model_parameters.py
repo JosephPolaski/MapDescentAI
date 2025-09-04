@@ -6,7 +6,7 @@ from typing import List
 class ModelParameters:
     weights : NDArray = None
     bias : NDArray = None        
-    loss_history : List[float] = field(default_factory=list)
+    loss_history : NDArray = None
     number_of_classes : int = 0
     learning_rate : float = 0.01
     epochs : int = 200
