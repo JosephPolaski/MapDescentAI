@@ -10,8 +10,7 @@ class MapDescentDataset:
 
     def __init__(self):
         self.logger = MDLog()
-        self.data_manager = DataManager()
-        self.data_manager.load_stored_data()
+        self.data_manager = DataManager()       
 
         self.stored_data_filename = ""
         self.number_of_classes = self.data_manager.label_count

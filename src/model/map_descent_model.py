@@ -1,10 +1,12 @@
 import numpy as np
+import utilities.constants as constants
 
 from data_management.data_manager import DataManager
 from data_management.dataset import MapDescentDataset
 from data_management.data_transfer_objects.model_parameters import ModelParameters
 from data_management.enums.stored_data_type import StoredDataType
 from numpy.typing import NDArray
+from sklearn.metrics import confusion_matrix, classification_report
 from utilities.md_log import MDLog
 
 class MapDescentModel:
@@ -34,11 +36,40 @@ class MapDescentModel:
         self.parameters = stored_parameters
         self.logger.info("Successfully loaded saved training parameters")
 
-    def forward_pass(self) -> NDArray:        
+    def evaluate_performance(self, is_test : bool = False):
+        """Evaluate model performance by running model on test dataset"""
+
+        labels = self.dataset.labels_test if is_test else self.dataset.labels_train
+        dataset_name = 'Test' if is_test else 'Train'
+
+        # Run forward pass on test dataset to get probabilities
+        test_probabilities = self.forward_pass(is_test=is_test)
+        predicted_classes = np.argmax(test_probabilities, axis=1)
+        
+        calculated_accuracy = np.mean(predicted_classes == labels)
+        calculated_loss = self.calclate_cross_entropy_loss(test_probabilities, labels)
+
+        matrix_confusion = confusion_matrix(labels, predicted_classes)
+        report = classification_report(labels, predicted_classes, target_names= [constants.INDEX_TO_LABEL_MAP[i] for i in np.unique(labels)])
+
+        self.logger.info("\nEvaluation Report \n" + 
+                         "============================\n" +
+                         f'{dataset_name} Accuracy: {calculated_accuracy:.4f}\n' + 
+                         f'{dataset_name} Loss: {calculated_loss:.4f} \n\n' +
+                         f'Confusion Matrix: \n{matrix_confusion}\n\n' +
+                         f'Classification Report: \n{report}\n' +
+                         "============================\n\n")
+        
+        self.logger.info(f"True label counts: {np.bincount(labels, minlength=self.dataset.number_of_classes)}")
+        self.logger.info(f"Predicted counts: {np.bincount(predicted_classes, minlength=self.dataset.number_of_classes)}")
+
+    def forward_pass(self, is_test : bool = False) -> NDArray:        
         """Compute land use class probabilities for each class in each image using softmax"""
 
+        dataset = self.dataset.features_test if is_test else self.dataset.features_train      
+            
         # Creating linear combination of features and weights (raw scores per class per image)
-        raw_class_scores = np.dot(self.dataset.features_train, self.parameters.weights) 
+        raw_class_scores = np.dot(dataset, self.parameters.weights) 
         raw_class_scores += self.parameters.bias
 
         # Get maximum per row to prevent large exponentials in softmax 
@@ -49,12 +80,12 @@ class MapDescentModel:
         probabilities = score_exponentials / np.sum(score_exponentials, axis=1, keepdims=True)
         return probabilities
     
-    def calclate_cross_entropy_loss(self, probabilities: np.ndarray) -> float: 
+    def calclate_cross_entropy_loss(self, probabilities: np.ndarray, labels : np.ndarray) -> float: 
         # 1. Ensure probabilities don't hit exactly 0 or 1
         bounded_probabilities = np.clip(probabilities, self.epsilon, 1 - self.epsilon)
 
         # 2. Extract the probability assignd to the correct classes
-        class_probabilities = bounded_probabilities[np.arange(len(self.dataset.labels_train)), self.dataset.labels_train]
+        class_probabilities = bounded_probabilities[np.arange(len(labels)), labels]
 
         # 3. Cross-entropy = negative average log probability of correct classes
         cross_entropy_loss = -np.mean(np.log(class_probabilities))
@@ -91,11 +122,19 @@ class MapDescentModel:
     def train_model(self):
         self.logger.info(f"Training MapDescentAI Model with Learning Rate: {self.parameters.learning_rate} and Epochs: {self.parameters.epochs}")
 
+        shuffled_indexes = np.arange(self.dataset.features_train.shape[0])
+        self.dataset.features_train = self.dataset.features_train[shuffled_indexes]
+        self.dataset.labels_train = self.dataset.labels_train[shuffled_indexes]
+
+        shuffled_indexes_test = np.arange(self.dataset.features_test.shape[0])
+        self.dataset.features_test = self.dataset.features_test[shuffled_indexes_test]
+        self.dataset.labels_test = self.dataset.labels_test[shuffled_indexes_test]
+
         for epoch in range(self.parameters.epochs):
 
             probabilities = self.forward_pass()
 
-            loss = self.calclate_cross_entropy_loss(probabilities)
+            loss = self.calclate_cross_entropy_loss(probabilities, self.dataset.labels_train)
             self.backward_pass(probabilities)
 
             self.logger.info(f"Epoch {epoch} completed with a loss value of {loss}")
