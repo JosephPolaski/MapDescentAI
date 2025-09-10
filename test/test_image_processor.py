@@ -5,7 +5,7 @@ from data_management.image_processor import ImageProcessor
 @pytest.fixture(scope="module")
 def image_processor():
     processor = ImageProcessor()
-    processor.build_image_data()
+    processor.preprocess_image_data()
     return processor
 
 def test_preprocess_image_shape(image_processor):

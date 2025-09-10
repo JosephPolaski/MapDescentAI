@@ -18,7 +18,7 @@ class ImageProcessor:
         self.features : NDArray = None
         self.labels : None 
 
-    def build_image_data(self):
+    def preprocess_image_data(self):
         try:
             self.logger.method_entry()
 
