@@ -3,6 +3,7 @@ import numpy as np
 import sys
 
 from data_management.data_manager import DataManager
+from data_management.enums.stored_data_type import StoredDataType
 from numpy.typing import NDArray
 from pathlib import Path
 from typing import Dict
@@ -31,15 +32,19 @@ class ImageProcessor:
             for label, image_path_list in images_with_labels.items():               
                 for image_path in image_path_list: 
                       
-                      image = cv2.imread(image_path)
-                      image_data.append(image)
+                      normalized_image = cv2.imread(image_path).astype(np.float32) / 255.0
+                      image_data.append(normalized_image)
                       labels_as_integers.append(constants.LABEL_TO_INDEX_MAP[label])
 
             self.features = np.stack(image_data, axis=0)
-            self.labels =  np.eye(number_of_classes, dtype=np.uint8)[labels_as_integers]                     
-            print()
+            self.labels =  np.eye(number_of_classes, dtype=np.uint8)[labels_as_integers]                   
+            self.__split_and_store_data()
         except Exception as ex:
             self.logger.error(f"Failed to preprocess data: \n\n {ex} \n\n")    
+
+    def __split_and_store_data(self):
+        split_data = self.data_manager.split_dataset(self.labels, self.feature)
+        self.data_manager.store_data_locally(split_data, StoredDataType.DATASET)
 
 if __name__=="__main__" :
     print("This module is not meant to be run as a standalone script...exiting..")
