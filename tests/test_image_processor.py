@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+
 from data_management.image_processor import ImageProcessor
 
 @pytest.fixture(scope="module")
