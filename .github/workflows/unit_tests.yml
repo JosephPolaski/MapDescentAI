@@ -2,6 +2,7 @@ name: Map Descent AI Unit Tests
 
 on:
   pull_request:
+    branches:
       - main
 
 jobs:
