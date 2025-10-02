@@ -16,13 +16,8 @@ from utilities.md_log import MDLog
 class DataManager:
 
     def __init__(self):           
-        self.logger = MDLog()
-        self.split_data : SplitData = None
-        self.image_count : int = 0
-        self.training_feature_count : int = 0
-        self.label_count :int = 0
-         
-
+        self.logger = MDLog()       
+     
     def get_image_paths_with_labels(self) -> Dict[str, List[Path]]:      
         try:
             self.logger.method_entry()
@@ -31,103 +26,106 @@ class DataManager:
             for subdirectory in paths.DATA_DIR.iterdir():
 
                 if not subdirectory.is_dir():
-                    continue
+                    continue                       
+               
+                image_paths = [path for path in subdirectory.iterdir() if path.suffix.lower() == constants.JPEG_EXT]                
+                images_with_labels.setdefault(subdirectory.name, []).extend(image_paths)                                
 
-                label = subdirectory.name             
-                label_exists = label in images_with_labels.keys()
-                
-                image_paths = [path for path in subdirectory.iterdir() if path.suffix.lower() == constants.JPEG_EXT]                    
-                self.image_count += len(image_paths)
-
-                if(label_exists):
-                    images_with_labels[label] += image_paths
-                else:
-                    images_with_labels[label] = image_paths                                    
-
-            self.label_count = len(images_with_labels)
             return images_with_labels
 
         except Exception as ex:
             self.logger(f"Failed to get image paths with labels: \n\n {ex} \n\n")      
 
-    def split_dataset(self, label_vector, feature_matrix):
-        self.logger.info("Randomly splitting data into training (80%) and testing (20%) sets")
-
-        label_vector_1d = label_vector.ravel()       
+    def split_dataset(self, labels, features) -> SplitData:
+        self.logger.info("Randomly splitting data into training (80%) and testing (20%) sets")              
 
         train_labels, test_labels, train_features, test_features = train_test_split(
-            label_vector_1d, # flatten to 1D list of classes
-            feature_matrix,
+            labels, 
+            features,
             test_size=0.2,
             random_state=constants.RANDOM_SEED,
-            stratify=label_vector_1d
+            stratify=labels
         )
 
-        self.split_data = SplitData() 
-        self.split_data.labels_train = train_labels
-        self.split_data.labels_test = test_labels
-        self.split_data.features_train = train_features
-        self.split_data.features_test = test_features  
-        self.training_feature_count = test_features.shape[1]  
+        split_data = SplitData(
+            labels_train = train_labels,
+            labels_test = test_labels,
+            features_train = train_features,
+            features_test = test_features
+        ) 
 
-    def store_data_locally(self, data_type = StoredDataType.DATASET , parameters : ModelParameters = None):
+        return split_data       
+
+    def store_data_locally(self, split_data : SplitData, data_type = StoredDataType.DATASET , parameters : ModelParameters = None) -> bool:
         try:
             file_helpers.try_create_directory(paths.STORED_DATA_DIR) 
 
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filepath = paths.STORED_DATA_DIR / (f"MapDescentAI_{data_type.value}_" + timestamp + ".npz")
             
-            if(data_type == StoredDataType.DATASET):            
-                np.savez_compressed(
-                    filepath, 
-                    labels_train = self.split_data.labels_train, 
-                    labels_test = self.split_data.labels_test,
-                    features_train = self.split_data.features_train,
-                    features_test = self.split_data.features_test)
-                
-            if(data_type == StoredDataType.PARAMETERS):
-                np.savez_compressed(
-                    filepath, 
-                    weights = parameters.weights, 
-                    bias = parameters.bias,
-                    loss_history = parameters.loss_history,
-                    number_of_classes = parameters.number_of_classes)
+            self.__save_stored_data(filepath, split_data, data_type, parameters)
 
-            self.logger.info(f"Successfully stored {paths.STORED_DATA_DIR}{filepath}")            
+            self.logger.info(f"Successfully stored {paths.STORED_DATA_DIR}{filepath}")
+            return True 
+                   
         except Exception as ex:
             self.logger.error(f"Failed to store data locally: \n\n {ex} \n\n")
+            return False
 
     def load_stored_data(self, data_type = StoredDataType.DATASET) -> SplitData | ModelParameters | None:
         try:
+            type_name = "dataset" if data_type == StoredDataType.DATASET else "parameters"
             most_recent_data : Path = file_helpers.get_most_recent_dataset_filename(data_type)
 
             if most_recent_data is None:
                 return None
 
             stored_data = np.load(most_recent_data)
+            self.logger.info(f"Loaded {type_name} from {most_recent_data}")
 
-            if(data_type == StoredDataType.DATASET):
-                self.logger.info(f"Loaded dataset from {most_recent_data}")
-                self.training_feature_count = stored_data["features_train"].shape[1]
-                self.label_count = np.unique(stored_data["labels_train"]).size
-                return SplitData(
-                    labels_test = stored_data["labels_test"],
-                    labels_train = stored_data["labels_train"],
-                    features_test = np.squeeze(stored_data["features_test"]),
-                    features_train = np.squeeze(stored_data["features_train"])
-                )           
-                
-            if(data_type == StoredDataType.PARAMETERS):
-                self.logger.info(f"Loaded parameters from {most_recent_data}")
-                return ModelParameters(
-                    weights = stored_data["weights"],
-                    bias = stored_data["bias"],
-                    loss_history = stored_data["loss_history"],
-                    number_of_classes = stored_data["number_of_classes"]
-                )
+            return self.__unpack_stored_data(data_type, stored_data)
 
         except Exception as ex:
             self.logger.error(f"Failed to load stored data: \n\n {ex} \n\n")    
+
+    @staticmethod
+    def __save_stored_data(filepath, split_data, data_type, parameters):
+        if(data_type == StoredDataType.DATASET):            
+                np.savez_compressed(
+                    filepath, 
+                    labels_train = split_data.labels_train, 
+                    labels_test = split_data.labels_test,
+                    features_train = split_data.features_train,
+                    features_test = split_data.features_test)
+                
+        if(data_type == StoredDataType.PARAMETERS):
+            np.savez_compressed(
+                filepath, 
+                weights = parameters.weights, 
+                bias = parameters.bias,
+                loss_history = parameters.loss_history,
+                number_of_classes = parameters.number_of_classes)
+
+    @staticmethod
+    def __unpack_stored_data(data_type, stored_data) -> SplitData | ModelParameters:
+
+        if(data_type == StoredDataType.DATASET):               
+                
+            return SplitData(
+                labels_test = stored_data["labels_test"],
+                labels_train = stored_data["labels_train"],
+                features_test = stored_data["features_test"],
+                features_train = stored_data["features_train"]
+            )           
+                
+        if(data_type == StoredDataType.PARAMETERS):            
+
+            return ModelParameters(
+                weights = stored_data["weights"],
+                bias = stored_data["bias"],
+                loss_history = stored_data["loss_history"],
+                number_of_classes = stored_data["number_of_classes"]
+            )
 
 if __name__=="__main__" :
     print("This module is not meant to be run as a standalone script...exiting..")

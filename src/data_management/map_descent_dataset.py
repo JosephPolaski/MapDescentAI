@@ -56,7 +56,7 @@ class MapDescentDataset:
 
     def __preprocess_and_fetch(self):
         image_processor = ImageProcessor()
-        image_processor.build_flattened_image_data()
+        image_processor.preprocess_image_data()
 
         isStoredDataSuccess = self.__try_fetch_stored_data()
 
