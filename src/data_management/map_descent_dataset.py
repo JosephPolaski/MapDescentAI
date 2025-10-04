@@ -9,12 +9,9 @@ from utilities.md_log import MDLog
 class MapDescentDataset:
 
     def __init__(self):
-        self.logger = MDLog()
-        self.data_manager = DataManager()       
+        self.logger = MDLog()      
 
         self.stored_data_filename = ""
-        self.number_of_classes = self.data_manager.label_count
-        self.number_of_features = self.data_manager.training_feature_count
 
         self.labels_train = None
         self.labels_test = None
@@ -43,7 +40,7 @@ class MapDescentDataset:
         if not stored_data_exists:
             return False
         
-        stored_data : SplitData | None = self.data_manager.load_stored_data() 
+        stored_data : SplitData | None = DataManager.load_stored_data() 
 
         if stored_data is None:
             raise ValueError("Stored Map Descent dataset was None")

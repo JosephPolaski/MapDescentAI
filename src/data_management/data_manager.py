@@ -13,14 +13,14 @@ from typing import Dict, List
 from utilities import constants
 from utilities.md_log import MDLog
 
-class DataManager:
+logger = MDLog()
+  
+class DataManager:    
 
-    def __init__(self):           
-        self.logger = MDLog()       
-     
-    def get_image_paths_with_labels(self) -> Dict[str, List[Path]]:      
+    @staticmethod 
+    def get_image_paths_with_labels() -> Dict[str, List[Path]]:      
         try:
-            self.logger.method_entry()
+            logger.method_entry()
             images_with_labels : Dict[str, List[Path]] = {}
 
             for subdirectory in paths.DATA_DIR.iterdir():
@@ -34,10 +34,11 @@ class DataManager:
             return images_with_labels
 
         except Exception as ex:
-            self.logger(f"Failed to get image paths with labels: \n\n {ex} \n\n")      
+            logger(f"Failed to get image paths with labels: \n\n {ex} \n\n")      
 
-    def split_dataset(self, labels, features) -> SplitData:
-        self.logger.info("Randomly splitting data into training (80%) and testing (20%) sets")              
+    @staticmethod
+    def split_dataset(labels, features) -> SplitData:
+        logger.info("Randomly splitting data into training (80%) and testing (20%) sets")              
 
         train_labels, test_labels, train_features, test_features = train_test_split(
             labels, 
@@ -56,23 +57,25 @@ class DataManager:
 
         return split_data       
 
-    def store_data_locally(self, split_data : SplitData, data_type = StoredDataType.DATASET , parameters : ModelParameters = None) -> bool:
+    @staticmethod
+    def store_data_locally(split_data : SplitData, data_type = StoredDataType.DATASET , parameters : ModelParameters = None) -> bool:
         try:
             file_helpers.try_create_directory(paths.STORED_DATA_DIR) 
 
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filepath = paths.STORED_DATA_DIR / (f"MapDescentAI_{data_type.value}_" + timestamp + ".npz")
             
-            self.__save_stored_data(filepath, split_data, data_type, parameters)
+            DataManager.__save_stored_data(filepath, split_data, data_type, parameters)
 
-            self.logger.info(f"Successfully stored {paths.STORED_DATA_DIR}{filepath}")
+            logger.info(f"Successfully stored {paths.STORED_DATA_DIR}{filepath}")
             return True 
                    
         except Exception as ex:
-            self.logger.error(f"Failed to store data locally: \n\n {ex} \n\n")
+            logger.error(f"Failed to store data locally: \n\n {ex} \n\n")
             return False
 
-    def load_stored_data(self, data_type = StoredDataType.DATASET) -> SplitData | ModelParameters | None:
+    @staticmethod
+    def load_stored_data(data_type = StoredDataType.DATASET) -> SplitData | ModelParameters | None:
         try:
             type_name = "dataset" if data_type == StoredDataType.DATASET else "parameters"
             most_recent_data : Path = file_helpers.get_most_recent_dataset_filename(data_type)
@@ -81,12 +84,12 @@ class DataManager:
                 return None
 
             stored_data = np.load(most_recent_data)
-            self.logger.info(f"Loaded {type_name} from {most_recent_data}")
+            logger.info(f"Loaded {type_name} from {most_recent_data}")
 
-            return self.__unpack_stored_data(data_type, stored_data)
+            return DataManager.__unpack_stored_data(data_type, stored_data)
 
         except Exception as ex:
-            self.logger.error(f"Failed to load stored data: \n\n {ex} \n\n")    
+            logger.error(f"Failed to load stored data: \n\n {ex} \n\n")    
 
     @staticmethod
     def __save_stored_data(filepath, split_data, data_type, parameters):

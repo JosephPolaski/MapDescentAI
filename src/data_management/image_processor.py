@@ -14,8 +14,7 @@ from utilities.md_log import MDLog
 
 class ImageProcessor:      
 
-    def __init__(self):
-        self.data_manager = DataManager()           
+    def __init__(self):         
         self.logger = MDLog()
         
         self.features_tensor : Tensor = None
@@ -25,7 +24,7 @@ class ImageProcessor:
         try:
             self.logger.method_entry()
 
-            images_with_labels : Dict[str, Path] = self.data_manager.get_image_paths_with_labels()             
+            images_with_labels : Dict[str, Path] = DataManager.get_image_paths_with_labels()             
            
             data : FeatureLabelInfo = self.__get_feature_label_data(images_with_labels)      
 
@@ -62,8 +61,8 @@ class ImageProcessor:
         self.labels_tensor = torch.tensor(labels, dtype=torch.long) 
 
     def __split_and_store_data(self):
-        split_data = self.data_manager.split_dataset(self.labels, self.feature)
-        self.data_manager.store_data_locally(split_data, StoredDataType.DATASET)
+        split_data = DataManager.split_dataset(self.labels, self.feature)
+        DataManager.store_data_locally(split_data, StoredDataType.DATASET)
 
 if __name__=="__main__" :
     print("This module is not meant to be run as a standalone script...exiting..")
