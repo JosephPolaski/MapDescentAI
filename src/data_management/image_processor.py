@@ -61,7 +61,7 @@ class ImageProcessor:
         self.labels_tensor = torch.tensor(labels, dtype=torch.long) 
 
     def __split_and_store_data(self):
-        split_data = DataManager.split_dataset(self.labels, self.feature)
+        split_data = DataManager.split_dataset(self.labels_tensor, self.features_tensor)
         DataManager.store_data_locally(split_data, StoredDataType.DATASET)
 
 if __name__=="__main__" :

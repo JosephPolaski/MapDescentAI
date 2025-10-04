@@ -1,9 +1,9 @@
-from numpy.typing import NDArray
+from torch import Tensor
 from dataclasses import dataclass
 
 @dataclass
 class SplitData:
-    labels_train: NDArray = None
-    labels_test : NDArray = None
-    features_train : NDArray = None
-    features_test : NDArray = None
+    labels_train: Tensor = None
+    labels_test : Tensor = None
+    features_train : Tensor = None
+    features_test : Tensor = None

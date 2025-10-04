@@ -1,20 +1,21 @@
+import torch
 import numpy as np
 import sys
 import utilities.paths as paths
 import utilities.file_helpers as file_helpers
 
+from torch import Tensor
 from data_management.data_transfer_objects.split_data import SplitData
 from data_management.data_transfer_objects.model_parameters import ModelParameters
 from data_management.enums.stored_data_type import StoredDataType
 from datetime import datetime
 from pathlib import Path
-from sklearn.model_selection import train_test_split
 from typing import Dict, List
 from utilities import constants
 from utilities.md_log import MDLog
 
 logger = MDLog()
-  
+
 class DataManager:    
 
     @staticmethod 
@@ -37,22 +38,24 @@ class DataManager:
             logger(f"Failed to get image paths with labels: \n\n {ex} \n\n")      
 
     @staticmethod
-    def split_dataset(labels, features) -> SplitData:
+    def split_dataset(features : Tensor, labels : Tensor, test_size=0.2, seed=None) -> SplitData:
         logger.info("Randomly splitting data into training (80%) and testing (20%) sets")              
 
-        train_labels, test_labels, train_features, test_features = train_test_split(
-            labels, 
-            features,
-            test_size=0.2,
-            random_state=constants.RANDOM_SEED,
-            stratify=labels
-        )
+        if seed is not None:
+            torch.manual_seed(seed)
+
+        feature_count = features.shape[0]
+        indexes = torch.randperm(feature_count)
+        split_index = int(feature_count * (1 - test_size))
+
+        train_index = indexes[:split_index]
+        test_index = indexes[split_index:]       
 
         split_data = SplitData(
-            labels_train = train_labels,
-            labels_test = test_labels,
-            features_train = train_features,
-            features_test = test_features
+            labels_train = labels[train_index],
+            labels_test = labels[test_index],
+            features_train = features[train_index],
+            features_test = features[test_index]
         ) 
 
         return split_data       
@@ -92,14 +95,14 @@ class DataManager:
             logger.error(f"Failed to load stored data: \n\n {ex} \n\n")    
 
     @staticmethod
-    def __save_stored_data(filepath, split_data, data_type, parameters):
+    def __save_stored_data(filepath : Path, split_data : SplitData, data_type: StoredDataType, parameters : ModelParameters):
         if(data_type == StoredDataType.DATASET):            
                 np.savez_compressed(
                     filepath, 
-                    labels_train = split_data.labels_train, 
-                    labels_test = split_data.labels_test,
-                    features_train = split_data.features_train,
-                    features_test = split_data.features_test)
+                    labels_train = split_data.labels_train.cpu().numpy(), 
+                    labels_test = split_data.labels_test.cpu().numpy(),
+                    features_train = split_data.features_train.cpu().numpy(),
+                    features_test = split_data.features_test.cpu().numpy())
                 
         if(data_type == StoredDataType.PARAMETERS):
             np.savez_compressed(
@@ -110,15 +113,17 @@ class DataManager:
                 number_of_classes = parameters.number_of_classes)
 
     @staticmethod
-    def __unpack_stored_data(data_type, stored_data) -> SplitData | ModelParameters:
+    def __unpack_stored_data(data_type : StoredDataType, stored_data) -> SplitData | ModelParameters:
 
-        if(data_type == StoredDataType.DATASET):               
-                
+        if(data_type == StoredDataType.DATASET):  
+            # load data to gpu if available             
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
+
             return SplitData(
-                labels_test = stored_data["labels_test"],
-                labels_train = stored_data["labels_train"],
-                features_test = stored_data["features_test"],
-                features_train = stored_data["features_train"]
+                labels_test = torch.from_numpy(stored_data["labels_test"]).to(device),
+                labels_train = torch.from_numpy(stored_data["labels_train"]).to(device),
+                features_test = torch.from_numpy(stored_data["features_test"]).to(device),
+                features_train = torch.from_numpy(stored_data["features_train"]).to(device)
             )           
                 
         if(data_type == StoredDataType.PARAMETERS):            
